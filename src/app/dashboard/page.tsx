@@ -62,9 +62,7 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-bold text-blue-600">Warung Wareg</h1>
         <div className="mt-6 flex items-center gap-4">
           <img
-            src={`${process.env.NEXT_PUBLIC_API_URL}/uploads/${
-              user?.profilePic || "avatar-placeholder.png"
-            }`}
+            src={`${user?.profilePic || "avatar-placeholder.png"}`} // Updated image source
             alt="Profile Picture"
             className="w-12 h-12 rounded-full object-cover"
           />
