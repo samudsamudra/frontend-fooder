@@ -22,7 +22,7 @@ export default function LoginPage() {
 
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
-        router.push("/dashboard"); // Redirect ke dashboard setelah login
+        router.push("/dashboard");
       } else {
         setError("Login berhasil, tetapi token tidak ditemukan.");
       }
@@ -32,70 +32,84 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="h-screen w-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-600">
-      <div className="bg-white shadow-lg rounded-2xl p-10 w-full max-w-md">
-        {/* Title */}
-        <h2 className="text-3xl font-bold text-gray-900 text-center">
-          Sign In
-        </h2>
-        <p className="text-gray-500 text-center mb-4">
-          Unlock your world.
-        </p>
+    <div className="h-screen w-screen flex items-center justify-center bg-gray-100">
+      <div className="flex w-[900px] bg-white rounded-2xl shadow-lg overflow-hidden">
+        {/* Kiri - Background dengan Gradient */}
+        <div className="w-1/2 bg-gradient-to-r from-purple-600 to-orange-400 flex flex-col justify-center items-center text-white p-10">
+          <h1 className="text-3xl font-bold">Warung Waregggggg!</h1>
+        </div>
 
-        {/* Error Message */}
-        {error && (
-          <p className="text-red-500 text-center bg-red-100 p-2 rounded-lg mb-4">
-            {error}
+        {/* Kanan - Form Login */}
+        <div className="w-1/2 p-10 flex flex-col justify-center">
+          <h2 className="text-3xl font-bold text-gray-900 text-center">
+            Login
+          </h2>
+          <p className="text-gray-500 text-center mb-6">
+            Halo Ayo login dulu sebelum maem.
           </p>
-        )}
 
-        {/* Login Form */}
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-gray-700 text-sm font-medium">
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
-              required
-              title="Email"
-              placeholder="Enter your email"
-            />
-          </div>
+          {error && (
+            <p className="text-red-500 text-center bg-red-100 p-2 rounded-lg mb-4">
+              {error}
+            </p>
+          )}
 
-          <div>
-            <label className="block text-gray-700 text-sm font-medium">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
-              required
-              title="Password"
-              placeholder="Enter your password"
-            />
-          </div>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-gray-700 text-sm font-medium">
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                required
+                title="Email"
+                placeholder="username@gmail.com"
+              />
+            </div>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-all duration-300"
-          >
-            Sign In
-          </button>
-        </form>
+            <div>
+              <label className="block text-gray-700 text-sm font-medium">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                required
+                title="Password"
+                placeholder="**********"
+              />
+            </div>
 
-        {/* Register Link */}
-        <p className="text-center text-gray-500 mt-4">
-          Don't have an account?{" "}
-          <a href="/register" className="text-blue-600 font-semibold">
-            Create an account
-          </a>
-        </p>
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center">
+                <input type="checkbox" className="mr-2" title="Remember Me" />
+                <span>Remember Me</span>
+              </div>
+              <a href="#" className="text-purple-600 hover:underline">
+                Forgot Password?
+              </a>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded-lg transition-all duration-300"
+            >
+              Login
+            </button>
+          </form>
+
+          <p className="text-center text-gray-500 mt-4">
+            New User?{" "}
+            <a href="/register" className="text-purple-600 font-semibold">
+              Signup
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );
