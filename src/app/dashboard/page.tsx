@@ -3,15 +3,26 @@
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
-  const [orders, setOrders] = useState<any[]>([]); // ⬅️ State untuk menyimpan data order
+  const [orders, setOrders] = useState<any[]>([]);
   const router = useRouter();
 
   useEffect(() => {
     fetchUserProfile();
-    fetchOrders(); // ⬅️ Panggil fetch data order
+    fetchOrders();
   }, []);
 
   const fetchUserProfile = async () => {
@@ -36,33 +47,34 @@ export default function DashboardPage() {
     }
   };
 
-  // ✅ Fetch data order dari API
   const fetchOrders = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/order/get-order`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
-
-      setOrders(response.data); // Simpan data order ke state
+      setOrders(response.data);
     } catch (error) {
       console.error("Failed to fetch orders:", error);
     }
   };
 
+  // Format data for charts
+  const chartData = orders.map((order) => ({
+    date: new Date(order.createdAt).toLocaleDateString(),
+    total: order.total_price,
+  }));
+
   return (
-    <div className="h-screen w-screen bg-gray-100 flex">
+    <div className="h-screen w-screen flex overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-lg p-6 flex flex-col">
+      <aside className="h-full w-64 bg-white shadow-lg p-6 flex flex-col overflow-y-auto">
         <h1 className="text-2xl font-bold text-blue-600">Warung Wareg</h1>
         <div className="mt-6 flex items-center gap-4">
           <img
-            src={`${user?.profilePic || "avatar-placeholder.png"}`} // Updated image source
+            src={`${user?.profilePic || "avatar-placeholder.png"}`}
             alt="Profile Picture"
             className="w-12 h-12 rounded-full object-cover"
           />
@@ -102,7 +114,7 @@ export default function DashboardPage() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6">
+      <main className="flex-grow p-6 overflow-y-auto">
         {/* Top Bar */}
         <div className="flex justify-between items-center bg-white shadow-md p-4 rounded-lg">
           <h2 className="text-xl font-semibold text-gray-800">Dashboard</h2>
@@ -152,7 +164,7 @@ export default function DashboardPage() {
                       {order.table_number}
                     </td>
                     <td className="p-3 border border-gray-300">
-                      ${order.total_price}
+                      Rp{order.total_price}
                     </td>
                     <td className="p-3 border border-gray-300">
                       {order.payment_method}
@@ -185,6 +197,59 @@ export default function DashboardPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Sales Report */}
+        <div className="p-6 bg-gray-100 min-h-screen">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">
+            Sales Report
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Grafik 1: Area Chart */}
+            <div className="bg-white p-6 rounded-lg shadow-lg">
+              <h3 className="text-lg font-semibold mb-4">Monthly Sales</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <Area
+                    type="monotone"
+                    dataKey="total"
+                    stroke="#8884d8"
+                    fillOpacity={1}
+                    fill="url(#colorTotal)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Grafik 2: Line Chart */}
+            <div className="bg-white p-6 rounded-lg shadow-lg">
+              <h3 className="text-lg font-semibold mb-4">Total Revenue</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={chartData}>
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <Line
+                    type="monotone"
+                    dataKey="total"
+                    stroke="#ff7300"
+                    strokeWidth={3}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </div>
       </main>
     </div>
