@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import axios from "axios";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
@@ -59,27 +59,35 @@ export default function DashboardPage() {
     <div className="h-screen w-screen bg-gray-100 flex">
       {/* Sidebar */}
       <aside className="w-64 bg-white shadow-lg p-6 flex flex-col">
-        <h1 className="text-2xl font-bold text-blue-600">blueBox</h1>
+        <h1 className="text-2xl font-bold text-blue-600">Warung Wareg</h1>
         <div className="mt-6 flex items-center gap-4">
           <img
-            src={user?.profilePic || "/avatar-placeholder.png"}
-            alt="Profile"
-            className="w-12 h-12 rounded-full border"
+            src={`${process.env.NEXT_PUBLIC_API_URL}/uploads/${
+              user?.profilePic || "avatar-placeholder.png"
+            }`}
+            alt="Profile Picture"
+            className="w-12 h-12 rounded-full object-cover"
           />
           <div>
-            <p className="font-semibold">{user?.name || "User"}</p>
+            <p className="font-semibold">{user?.email || "User"}</p>
             <p className="text-sm text-gray-500">{user?.role || "Guest"}</p>
           </div>
         </div>
 
         <nav className="mt-6 space-y-2">
-          <a href="/dashboard" className="block p-3 rounded-lg bg-blue-50 text-blue-600 font-medium">
+          <a
+            href="/dashboard"
+            className="block p-3 rounded-lg bg-blue-50 text-blue-600 font-medium"
+          >
             Dashboard
           </a>
           <a href="/orders" className="block p-3 rounded-lg hover:bg-gray-200">
             Orders
           </a>
-          <a href="/settings" className="block p-3 rounded-lg hover:bg-gray-200">
+          <a
+            href="/settings"
+            className="block p-3 rounded-lg hover:bg-gray-200"
+          >
             Settings
           </a>
         </nav>
@@ -113,12 +121,20 @@ export default function DashboardPage() {
           <table className="w-full border-collapse border border-gray-200">
             <thead>
               <tr className="bg-gray-100">
-                <th className="p-3 border border-gray-300 text-left">Order ID</th>
+                <th className="p-3 border border-gray-300 text-left">
+                  Order ID
+                </th>
                 <th className="p-3 border border-gray-300 text-left">UUID</th>
-                <th className="p-3 border border-gray-300 text-left">Customer</th>
+                <th className="p-3 border border-gray-300 text-left">
+                  Customer
+                </th>
                 <th className="p-3 border border-gray-300 text-left">Table</th>
-                <th className="p-3 border border-gray-300 text-left">Total Price</th>
-                <th className="p-3 border border-gray-300 text-left">Payment</th>
+                <th className="p-3 border border-gray-300 text-left">
+                  Total Price
+                </th>
+                <th className="p-3 border border-gray-300 text-left">
+                  Payment
+                </th>
                 <th className="p-3 border border-gray-300 text-left">Status</th>
                 <th className="p-3 border border-gray-300 text-left">Date</th>
               </tr>
@@ -128,11 +144,21 @@ export default function DashboardPage() {
                 orders.map((order) => (
                   <tr key={order.id} className="hover:bg-gray-100">
                     <td className="p-3 border border-gray-300">{order.id}</td>
-                    <td className="p-3 border border-gray-300">{order.uuid || "-"}</td>
-                    <td className="p-3 border border-gray-300">{order.customer}</td>
-                    <td className="p-3 border border-gray-300">{order.table_number}</td>
-                    <td className="p-3 border border-gray-300">${order.total_price}</td>
-                    <td className="p-3 border border-gray-300">{order.payment_method}</td>
+                    <td className="p-3 border border-gray-300">
+                      {order.uuid || "-"}
+                    </td>
+                    <td className="p-3 border border-gray-300">
+                      {order.customer}
+                    </td>
+                    <td className="p-3 border border-gray-300">
+                      {order.table_number}
+                    </td>
+                    <td className="p-3 border border-gray-300">
+                      ${order.total_price}
+                    </td>
+                    <td className="p-3 border border-gray-300">
+                      {order.payment_method}
+                    </td>
                     <td
                       className={`p-3 border border-gray-300 font-semibold ${
                         order.status === "NEW"
@@ -151,7 +177,10 @@ export default function DashboardPage() {
                 ))
               ) : (
                 <tr>
-                  <td className="p-3 border border-gray-300 text-center" colSpan={8}>
+                  <td
+                    className="p-3 border border-gray-300 text-center"
+                    colSpan={8}
+                  >
                     No orders found.
                   </td>
                 </tr>
