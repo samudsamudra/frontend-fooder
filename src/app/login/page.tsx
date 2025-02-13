@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import axios from "axios";
+import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -21,7 +22,8 @@ export default function LoginPage() {
       );
 
       if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
+        // Set the token as a cookie
+        Cookies.set("token", response.data.token, { expires: 1, path: "/" });
         router.push("/dashboard");
       } else {
         setError("Login berhasil, tetapi token tidak ditemukan.");

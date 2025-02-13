@@ -33,6 +33,7 @@ body {
 
 body {
   @apply bg-white text-black dark:bg-black dark:text-white;
+  @apply bg-gray-100;
 }
 
 body::before {

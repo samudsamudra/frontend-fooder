@@ -1,19 +1,12 @@
 "use client";
 
 import axios from "axios";
+import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { OutstandingChart, RevenueChart } from "./components/Charts";
+import OrderTable from "./components/OrderTable";
+import RevenueCard from "./components/RevenueCard";
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
@@ -21,18 +14,17 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    fetchUserProfile();
-    fetchOrders();
+    const token = Cookies.get("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    fetchUserProfile(token);
+    fetchOrders(token);
   }, []);
 
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = async (token: string) => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        router.push("/login");
-        return;
-      }
-
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/user/profile`,
         {
@@ -47,12 +39,12 @@ export default function DashboardPage() {
     }
   };
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (token: string) => {
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/order/get-order`,
         {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
       setOrders(response.data);
@@ -61,11 +53,68 @@ export default function DashboardPage() {
     }
   };
 
+  // Filter orders from exactly 2 months ago up to today
+  const today = new Date();
+  const twoMonthsAgo = new Date(
+    today.getFullYear(),
+    today.getMonth() - 2,
+    today.getDate()
+  );
+
+  const filteredOrders = orders.filter(
+    (order) =>
+      new Date(order.createdAt) >= twoMonthsAgo &&
+      new Date(order.createdAt) <= today
+  );
+
   // Format data for charts
-  const chartData = orders.map((order) => ({
-    date: new Date(order.createdAt).toLocaleDateString(),
-    total: order.total_price,
-  }));
+  interface ChartData {
+    date: string;
+    totalRevenue: number;
+    totalOrders: number;
+  }
+
+  const generateEmptyChartData = (
+    startDate: Date,
+    endDate: Date
+  ): ChartData[] => {
+    const data: ChartData[] = [];
+    const currentDate = new Date(startDate);
+
+    while (currentDate <= endDate) {
+      data.push({
+        date: currentDate.toLocaleDateString(),
+        totalRevenue: 0,
+        totalOrders: 0,
+      });
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return data;
+  };
+
+  const emptyChartData = generateEmptyChartData(twoMonthsAgo, today);
+
+  const chartData: ChartData[] = filteredOrders.reduce(
+    (acc: ChartData[], order: any) => {
+      const date = new Date(order.createdAt).toLocaleDateString();
+      const existingData = acc.find((data: ChartData) => data.date === date);
+
+      if (existingData) {
+        existingData.totalRevenue += order.total_price;
+        existingData.totalOrders += 1;
+      } else {
+        acc.push({
+          date,
+          totalRevenue: order.total_price,
+          totalOrders: 1,
+        });
+      }
+
+      return acc;
+    },
+    emptyChartData
+  );
 
   return (
     <div className="h-screen w-screen flex overflow-hidden">
@@ -100,12 +149,15 @@ export default function DashboardPage() {
           >
             Settings
           </a>
+          <a href="/menu" className="block p-3 rounded-lg hover:bg-gray-200">
+            Menu
+          </a>
         </nav>
 
         <button
           className="mt-auto bg-red-500 hover:bg-red-600 text-white font-semibold p-2 rounded-lg"
           onClick={() => {
-            localStorage.removeItem("token");
+            Cookies.remove("token");
             router.push("/login");
           }}
         >
@@ -125,131 +177,24 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Order Table */}
-        <div className="bg-white p-6 rounded-lg shadow-lg mt-6">
-          <h3 className="text-lg font-semibold mb-4">Order List</h3>
-          <table className="w-full border-collapse border border-gray-200">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="p-3 border border-gray-300 text-left">
-                  Order ID
-                </th>
-                <th className="p-3 border border-gray-300 text-left">UUID</th>
-                <th className="p-3 border border-gray-300 text-left">
-                  Customer
-                </th>
-                <th className="p-3 border border-gray-300 text-left">Table</th>
-                <th className="p-3 border border-gray-300 text-left">
-                  Total Price
-                </th>
-                <th className="p-3 border border-gray-300 text-left">
-                  Payment
-                </th>
-                <th className="p-3 border border-gray-300 text-left">Status</th>
-                <th className="p-3 border border-gray-300 text-left">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.length > 0 ? (
-                orders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-100">
-                    <td className="p-3 border border-gray-300">{order.id}</td>
-                    <td className="p-3 border border-gray-300">
-                      {order.uuid || "-"}
-                    </td>
-                    <td className="p-3 border border-gray-300">
-                      {order.customer}
-                    </td>
-                    <td className="p-3 border border-gray-300">
-                      {order.table_number}
-                    </td>
-                    <td className="p-3 border border-gray-300">
-                      Rp{order.total_price}
-                    </td>
-                    <td className="p-3 border border-gray-300">
-                      {order.payment_method}
-                    </td>
-                    <td
-                      className={`p-3 border border-gray-300 font-semibold ${
-                        order.status === "NEW"
-                          ? "text-blue-600"
-                          : order.status === "COMPLETED"
-                          ? "text-green-600"
-                          : "text-red-600"
-                      }`}
-                    >
-                      {order.status}
-                    </td>
-                    <td className="p-3 border border-gray-300">
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    className="p-3 border border-gray-300 text-center"
-                    colSpan={8}
-                  >
-                    No orders found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Sales Report */}
+        {/* Dashboard Content */}
         <div className="p-6 bg-gray-100 min-h-screen">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">
-            Sales Report
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Grafik 1: Area Chart */}
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-              <h3 className="text-lg font-semibold mb-4">Monthly Sales</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <Area
-                    type="monotone"
-                    dataKey="total"
-                    stroke="#8884d8"
-                    fillOpacity={1}
-                    fill="url(#colorTotal)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Grafik 2: Line Chart */}
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-              <h3 className="text-lg font-semibold mb-4">Total Revenue</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={chartData}>
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <Line
-                    type="monotone"
-                    dataKey="total"
-                    stroke="#ff7300"
-                    strokeWidth={3}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <RevenueCard
+              title="Total Revenue"
+              value={`Rp${filteredOrders
+                .reduce((sum, order) => sum + order.total_price, 0)
+                .toFixed(2)}`}
+              chart={<RevenueChart data={chartData} />}
+            />
+            <RevenueCard
+              title="Total Orders"
+              value={filteredOrders.length}
+              chart={<OutstandingChart data={chartData} />}
+            />
           </div>
+
+          <OrderTable orders={filteredOrders} />
         </div>
       </main>
     </div>
