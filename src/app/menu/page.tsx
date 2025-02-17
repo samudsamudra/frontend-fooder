@@ -23,6 +23,7 @@ const MenuPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [searchCriteria, setSearchCriteria] = useState("name");
+  const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -49,6 +50,37 @@ const MenuPage = () => {
   const handleAddMenu = () => router.push("/add-menu");
   const handleEditMenu = (id: number) => router.push(`/menu/edit/${id}`);
   const handleDeleteMenu = (id: number) => router.push(`/menu/delete/${id}`);
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this menu item?")) return;
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/menu/delete-menu/${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // Ensure cookies are sent with the request
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to delete menu item. Status: ${response.status}`
+        );
+      }
+
+      setMessage("Menu item deleted successfully!");
+      setMenu(menu.filter((item) => item.id !== id));
+    } catch (error) {
+      console.error("Error deleting menu:", error);
+      setMessage(
+        error instanceof Error ? error.message : "Failed to delete menu item."
+      );
+    }
+  };
 
   const filteredMenu = menu.filter((item) => {
     if (searchCriteria === "name") {
@@ -83,7 +115,7 @@ const MenuPage = () => {
           <button
             title="Delete Menu"
             className="text-red-500 hover:text-red-700 p-2 rounded-md bg-gray-100"
-            onClick={() => handleDeleteMenu(row.original.id)}
+            onClick={() => handleDelete(row.original.id)}
           >
             <FiTrash2 className="inline-block" />
           </button>
@@ -112,7 +144,9 @@ const MenuPage = () => {
         </div>
 
         <div className="flex mb-4">
-          <label htmlFor="searchCriteria" className="sr-only">Search Criteria</label>
+          <label htmlFor="searchCriteria" className="sr-only">
+            Search Criteria
+          </label>
           <select
             id="searchCriteria"
             value={searchCriteria}
@@ -130,6 +164,10 @@ const MenuPage = () => {
             className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
         </div>
+
+        {message && (
+          <div className="text-green-500 text-center mb-4">{message}</div>
+        )}
 
         {error ? (
           <div className="text-red-500 text-center">{error}</div>
@@ -179,7 +217,7 @@ const MenuPage = () => {
                         <button
                           title="Delete Menu"
                           className="text-red-500 hover:text-red-700"
-                          onClick={() => handleDeleteMenu(item.id)}
+                          onClick={() => handleDelete(item.id)}
                         >
                           <FiTrash2 />
                         </button>

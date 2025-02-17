@@ -1,64 +1,83 @@
 "use client";
 
-import axios from "axios";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { FiCheckCircle, FiUpload, FiXCircle } from "react-icons/fi";
 
 interface FormData {
   name: string;
   description: string;
   price: number;
   category: string;
-  picture: FileList;
+  picture?: string;
 }
 
-const AddMenuPage = () => {
+const EditMenuPage = () => {
+  const params = useParams();
+  const id = params?.id as string | undefined; // Ambil ID dari URL
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
-    watch,
-    reset,
+    setValue,
     formState: { errors },
   } = useForm<FormData>();
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const router = useRouter();
 
+  // Fetch existing data
+  useEffect(() => {
+    const fetchMenu = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/menu/get-menu?id=${id}`
+        );
+        const data = await response.json();
+        if (response.ok) {
+          setValue("name", data.name);
+          setValue("description", data.description);
+          setValue("price", data.price);
+          setValue("category", data.category);
+        } else {
+          setMessage("Failed to fetch menu data");
+        }
+      } catch (error) {
+        console.error("Error fetching menu:", error);
+      }
+    };
+
+    if (id) fetchMenu();
+  }, [id, setValue]);
+
+  // Handle form submit
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     setMessage(null);
 
-    const formData = new FormData();
-    formData.append("name", data.name);
-    formData.append("description", data.description);
-    formData.append("price", data.price.toString());
-    formData.append("category", data.category);
-    if (data.picture.length > 0) {
-      formData.append("picture", data.picture[0]);
-    }
-
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/menu/create-menu`,
-        formData,
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/menu/patch-menu/${id}`,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...data,
+            price: Number(data.price), // Ensure price is sent as a number
+          }),
         }
       );
 
-      setMessage("Menu added successfully!");
-      reset();
+      const result = await response.json();
+      if (!response.ok)
+        throw new Error(result.message || "Failed to update menu");
+
+      setMessage("Menu updated successfully!");
       setTimeout(() => router.push("/menu"), 2000);
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        setMessage(error.response?.data?.error || "Something went wrong");
-      } else {
-        setMessage("Something went wrong");
-      }
+      setMessage(
+        error instanceof Error ? error.message : "Something went wrong"
+      );
     } finally {
       setLoading(false);
     }
@@ -67,7 +86,7 @@ const AddMenuPage = () => {
   return (
     <div className="p-6 min-h-screen bg-gray-100 flex justify-center">
       <div className="w-full max-w-3xl bg-white shadow-lg rounded-lg p-6">
-        <h1 className="text-2xl font-bold text-gray-700 mb-4">Add New Menu</h1>
+        <h1 className="text-2xl font-bold text-gray-700 mb-4">Edit Menu</h1>
 
         {message && (
           <div
@@ -75,11 +94,6 @@ const AddMenuPage = () => {
               message.includes("success") ? "bg-green-500" : "bg-red-500"
             }`}
           >
-            {message.includes("success") ? (
-              <FiCheckCircle className="inline-block mr-2" />
-            ) : (
-              <FiXCircle className="inline-block mr-2" />
-            )}
             {message}
           </div>
         )}
@@ -147,30 +161,13 @@ const AddMenuPage = () => {
             )}
           </div>
 
-          {/* Picture Upload */}
-          <div>
-            <label className="block text-gray-600">Picture</label>
-            <input
-              type="file"
-              accept="image/*"
-              {...register("picture")}
-              className="w-full p-2 border border-gray-300 rounded-md"
-            />
-            {watch("picture")?.length > 0 && (
-              <div className="mt-2 text-gray-500 text-sm flex items-center">
-                <FiUpload className="mr-2" />
-                {watch("picture")[0]?.name}
-              </div>
-            )}
-          </div>
-
           {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
             className="w-full bg-blue-500 text-white px-4 py-2 rounded-md shadow hover:bg-blue-600 transition disabled:bg-gray-400"
           >
-            {loading ? "Adding..." : "Add Menu"}
+            {loading ? "Updating..." : "Update Menu"}
           </button>
         </form>
       </div>
@@ -178,4 +175,4 @@ const AddMenuPage = () => {
   );
 };
 
-export default AddMenuPage;
+export default EditMenuPage;
